@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import { every, get, noop, startsWith, defaultTo } from 'lodash';
+import { every, get, noop, startsWith } from 'lodash';
 import classnames from 'classnames';
 
 /**
@@ -134,7 +134,6 @@ export class MediaPlaceholder extends Component {
 			multiple = false,
 			notices,
 			allowedTypes = [],
-			hasUploadPermissions,
 			mediaUpload,
 		} = this.props;
 
@@ -146,7 +145,7 @@ export class MediaPlaceholder extends Component {
 		let instructions = labels.instructions || '';
 		let title = labels.title || '';
 
-		if ( ! hasUploadPermissions && ! onSelectURL ) {
+		if ( ! mediaUpload && ! onSelectURL ) {
 			instructions = __( 'To edit this block, you need permission to upload media.' );
 		}
 
@@ -156,27 +155,15 @@ export class MediaPlaceholder extends Component {
 			const isImage = isOneType && 'image' === allowedTypes[ 0 ];
 			const isVideo = isOneType && 'video' === allowedTypes[ 0 ];
 
-			if ( ! instructions ) {
-				if ( hasUploadPermissions ) {
-					instructions = __( 'Drag a media file, upload a new one or select a file from your library.' );
+			if ( ! instructions && mediaUpload ) {
+				instructions = __( 'Drag a media file, upload a new one or select a file from your library.' );
 
-					if ( isAudio ) {
-						instructions = __( 'Drag an audio, upload a new one or select a file from your library.' );
-					} else if ( isImage ) {
-						instructions = __( 'Drag an image, upload a new one or select a file from your library.' );
-					} else if ( isVideo ) {
-						instructions = __( 'Drag a video, upload a new one or select a file from your library.' );
-					}
-				} else if ( ! hasUploadPermissions && onSelectURL ) {
-					instructions = __( 'Given your current role, you can only link a media file, you cannot upload.' );
-
-					if ( isAudio ) {
-						instructions = __( 'Given your current role, you can only link an audio, you cannot upload.' );
-					} else if ( isImage ) {
-						instructions = __( 'Given your current role, you can only link an image, you cannot upload.' );
-					} else if ( isVideo ) {
-						instructions = __( 'Given your current role, you can only link a video, you cannot upload.' );
-					}
+				if ( isAudio ) {
+					instructions = __( 'Drag an audio, upload a new one or select a file from your library.' );
+				} else if ( isImage ) {
+					instructions = __( 'Drag an image, upload a new one or select a file from your library.' );
+				} else if ( isVideo ) {
+					instructions = __( 'Drag a video, upload a new one or select a file from your library.' );
 				}
 			}
 
@@ -202,23 +189,21 @@ export class MediaPlaceholder extends Component {
 				notices={ notices }
 			>
 				<MediaUploadCheck>
-					{ !! mediaUpload && (
-						<Fragment>
-							<DropZone
-								onFilesDrop={ this.onFilesUpload }
-								onHTMLDrop={ onHTMLDrop }
-							/>
-							<FormFileUpload
-								isLarge
-								className="editor-media-placeholder__button block-editor-media-placeholder__button"
-								onChange={ this.onUpload }
-								accept={ accept }
-								multiple={ multiple }
-							>
-								{ __( 'Upload' ) }
-							</FormFileUpload>
-						</Fragment>
-					) }
+					<Fragment>
+						<DropZone
+							onFilesDrop={ this.onFilesUpload }
+							onHTMLDrop={ onHTMLDrop }
+						/>
+						<FormFileUpload
+							isLarge
+							className="editor-media-placeholder__button block-editor-media-placeholder__button"
+							onChange={ this.onUpload }
+							accept={ accept }
+							multiple={ multiple }
+						>
+							{ __( 'Upload' ) }
+						</FormFileUpload>
+					</Fragment>
 					<MediaUpload
 						gallery={ multiple && this.onlyAllowsImages() }
 						multiple={ multiple }
@@ -262,11 +247,9 @@ export class MediaPlaceholder extends Component {
 }
 
 const applyWithSelect = withSelect( ( select ) => {
-	const { canUser } = select( 'core' );
 	const { getSettings } = select( 'core/block-editor' );
 
 	return {
-		hasUploadPermissions: defaultTo( canUser( 'create', 'media' ), true ),
 		mediaUpload: getSettings().__experimentalMediaUpload,
 	};
 } );
